@@ -1,0 +1,18 @@
+{
+  "name": "flip-dev-portal",
+  "version": "1.0.0",
+  "description": "Flip Browser Extension Developer Submission & Review Portal",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@vercel/blob": "^0.27.0",
+    "@vercel/postgres": "^0.10.0",
+    "bcryptjs": "^2.4.3",
+    "busboy": "^1.6.0",
+    "ejs": "^3.1.9",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2"
+  }
+}

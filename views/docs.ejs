@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Extension Guidelines — Flip Developer Portal</title>
+  <link rel="icon" type="image/png" href="/public/fliplogo.png">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: { extend: { colors: { flip: { 400: '#FB923C', 500: '#F97316', 600: '#EA580C' } } } }
+    }
+  </script>
+</head>
+<body class="min-h-screen bg-[#0a0a0f] text-white/80">
+  <!-- Top bar -->
+  <div class="border-b border-white/[0.06] bg-white/[0.02] px-6 py-3 flex items-center justify-between">
+    <a href="/" class="flex items-center gap-3">
+      <img src="/public/fliplogo.png" alt="Flip" class="w-8 h-8 rounded-xl">
+      <span class="text-sm font-semibold text-white/70">Flip Developer Portal</span>
+    </a>
+    <a href="/submit" class="text-xs text-flip-400/60 hover:text-flip-400 transition-colors">Submit Extension</a>
+  </div>
+
+  <div class="max-w-2xl mx-auto px-6 py-10">
+    <h1 class="text-2xl font-bold text-white/90 mb-2">Extension Guidelines</h1>
+    <p class="text-sm text-white/40 mb-10">Everything you need to know to build and submit a Flip Browser extension.</p>
+
+    <!-- Structure -->
+    <section class="mb-10">
+      <h2 class="text-base font-semibold text-white/80 mb-4">Extension Structure</h2>
+      <div class="bg-black/30 rounded-2xl p-5 font-mono text-xs text-white/50 mb-4">
+        <pre>my-extension/
+├── manifest.json    ← required
+├── App.jsx          ← main entry (React JSX)
+└── ... other files</pre>
+      </div>
+      <p class="text-sm text-white/40">Zip the folder and upload it. The zip must contain <code class="text-flip-400/60">manifest.json</code> at the root (or inside one top-level folder).</p>
+    </section>
+
+    <!-- Manifest -->
+    <section class="mb-10">
+      <h2 class="text-base font-semibold text-white/80 mb-4">manifest.json</h2>
+      <div class="bg-black/30 rounded-2xl p-5 font-mono text-xs text-white/50 mb-4">
+        <pre>{
+  "name": "My Extension",
+  "version": "1.0.0",
+  "description": "What it does",
+  "author": "Your Name",
+  "type": "sidebar",
+  "main": "App.jsx",
+  "permissions": ["storage"],
+  "api_version": "1.0"
+}</pre>
+      </div>
+      <div class="space-y-3 text-sm">
+        <div class="flex gap-3"><code class="text-flip-400/60 w-28 shrink-0">name</code><span class="text-white/40">Display name (max 50 chars)</span></div>
+        <div class="flex gap-3"><code class="text-flip-400/60 w-28 shrink-0">version</code><span class="text-white/40">Semantic version (x.y.z)</span></div>
+        <div class="flex gap-3"><code class="text-flip-400/60 w-28 shrink-0">description</code><span class="text-white/40">Short description (max 300 chars)</span></div>
+        <div class="flex gap-3"><code class="text-flip-400/60 w-28 shrink-0">author</code><span class="text-white/40">Developer name or organization</span></div>
+        <div class="flex gap-3"><code class="text-flip-400/60 w-28 shrink-0">type</code><span class="text-white/40"><code>sidebar</code> (default), <code>popup</code>, or <code>background</code></span></div>
+        <div class="flex gap-3"><code class="text-flip-400/60 w-28 shrink-0">main</code><span class="text-white/40">Entry file (usually App.jsx)</span></div>
+        <div class="flex gap-3"><code class="text-flip-400/60 w-28 shrink-0">permissions</code><span class="text-white/40">Array of required permissions</span></div>
+        <div class="flex gap-3"><code class="text-flip-400/60 w-28 shrink-0">api_version</code><span class="text-white/40">Flip SDK version (currently "1.0")</span></div>
+      </div>
+    </section>
+
+    <!-- Permissions -->
+    <section class="mb-10">
+      <h2 class="text-base font-semibold text-white/80 mb-4">Permissions</h2>
+      <p class="text-sm text-white/40 mb-4">Only request permissions your extension actually needs. Extensions with fewer permissions are approved faster.</p>
+      <div class="space-y-2">
+        <div class="flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-xl p-3">
+          <code class="text-xs font-mono text-white/50 w-40 shrink-0">storage</code>
+          <span class="text-xs text-white/30">Read/write persistent key-value storage</span>
+        </div>
+        <div class="flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-xl p-3">
+          <code class="text-xs font-mono text-yellow-400/60 w-40 shrink-0">network</code>
+          <span class="text-xs text-white/30">Make HTTP requests via Flip.net.fetch (CORS-free)</span>
+        </div>
+        <div class="flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-xl p-3">
+          <code class="text-xs font-mono text-blue-400/60 w-40 shrink-0">tabs</code>
+          <span class="text-xs text-white/30">Open new browser tabs via Flip.tabs.create()</span>
+        </div>
+        <div class="flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-xl p-3">
+          <code class="text-xs font-mono text-purple-400/60 w-40 shrink-0">ai</code>
+          <span class="text-xs text-white/30">Access the Flip AI assistant API</span>
+        </div>
+        <div class="flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-xl p-3">
+          <code class="text-xs font-mono text-white/50 w-40 shrink-0">music</code>
+          <span class="text-xs text-white/30">Control the built-in music player</span>
+        </div>
+        <div class="flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-xl p-3">
+          <code class="text-xs font-mono text-white/50 w-40 shrink-0">popups</code>
+          <span class="text-xs text-white/30">Show popup windows</span>
+        </div>
+        <div class="flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-xl p-3">
+          <code class="text-xs font-mono text-white/50 w-40 shrink-0">cross_storage</code>
+          <span class="text-xs text-white/30">Read other extensions' shared storage</span>
+        </div>
+        <div class="flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-xl p-3">
+          <code class="text-xs font-mono text-red-400/60 w-40 shrink-0">cross_storage_write</code>
+          <span class="text-xs text-white/30">Write to other extensions' shared storage (high privilege)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Forbidden -->
+    <section class="mb-10">
+      <h2 class="text-base font-semibold text-white/80 mb-4">What Gets Rejected</h2>
+      <ul class="space-y-2 text-sm text-white/40">
+        <li class="flex items-start gap-2">
+          <span class="text-red-400 mt-0.5">✗</span> Executable files (.exe, .dll, .bat, .sh, .ps1, .wasm)
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-red-400 mt-0.5">✗</span> Obfuscated or minified code (we need to review your source)
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-red-400 mt-0.5">✗</span> Extensions that collect user data without disclosure
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-red-400 mt-0.5">✗</span> Malicious network requests or crypto mining without consent
+        </li>
+        <li class="flex items-start gap-2">
+          <span class="text-red-400 mt-0.5">✗</span> Extensions requesting unnecessary permissions
+        </li>
+      </ul>
+    </section>
+
+    <!-- Review Process -->
+    <section class="mb-10">
+      <h2 class="text-base font-semibold text-white/80 mb-4">Review Process</h2>
+      <div class="space-y-4">
+        <div class="flex gap-4">
+          <div class="w-8 h-8 rounded-full bg-flip-500/15 text-flip-400 text-xs font-bold flex items-center justify-center shrink-0">1</div>
+          <div><p class="text-sm text-white/60 font-medium">Submit</p><p class="text-xs text-white/30">Upload your .zip — we auto-validate the manifest and file structure.</p></div>
+        </div>
+        <div class="flex gap-4">
+          <div class="w-8 h-8 rounded-full bg-flip-500/15 text-flip-400 text-xs font-bold flex items-center justify-center shrink-0">2</div>
+          <div><p class="text-sm text-white/60 font-medium">Review</p><p class="text-xs text-white/30">Our team reviews the source code, permissions, and security implications.</p></div>
+        </div>
+        <div class="flex gap-4">
+          <div class="w-8 h-8 rounded-full bg-flip-500/15 text-flip-400 text-xs font-bold flex items-center justify-center shrink-0">3</div>
+          <div><p class="text-sm text-white/60 font-medium">Decision</p><p class="text-xs text-white/30">Approved extensions go live on the marketplace. Rejected submissions include feedback.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="text-center mt-12 mb-8">
+      <a href="/submit"
+        class="inline-flex items-center gap-2 px-8 py-3 rounded-2xl bg-gradient-to-r from-flip-500 to-orange-600 text-white font-semibold text-sm hover:opacity-90 transition-opacity shadow-lg shadow-orange-500/20">
+        Submit Your Extension
+      </a>
+    </div>
+
+    <div class="text-center">
+      <a href="https://croak.work" target="_blank" class="inline-flex items-center gap-1.5 text-[10px] text-white/15 hover:text-white/30 transition-colors">
+        <img src="/public/fliplogo.png" alt="" class="w-3.5 h-3.5 rounded opacity-40">
+        CROAKWORKS
+      </a>
+    </div>
+  </div>
+</body>
+</html>
