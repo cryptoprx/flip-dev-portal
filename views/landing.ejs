@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Flip Developer Portal</title>
-  <meta name="description" content="Submit your extensions to the Flip Browser Marketplace. Build, submit, and publish extensions for thousands of users.">
+  <title>Flip Developer Portal — Extension Marketplace</title>
+  <meta name="description" content="Browse and submit extensions for the Flip Browser Marketplace. Build, submit, and publish extensions for thousands of users.">
   <link rel="icon" type="image/png" href="/public/fliplogo.png">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Flip Developer Portal">
-  <meta property="og:description" content="Submit your extensions to the Flip Browser Marketplace.">
+  <meta property="og:description" content="Browse and submit extensions for the Flip Browser Marketplace.">
   <meta property="og:image" content="/public/fliplogo.png">
   <meta name="twitter:card" content="summary">
   <meta name="twitter:title" content="Flip Developer Portal">
-  <meta name="twitter:description" content="Submit your extensions to the Flip Browser Marketplace.">
+  <meta name="twitter:description" content="Browse and submit extensions for the Flip Browser Marketplace.">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -20,53 +20,168 @@
     }
   </script>
 </head>
-<body class="min-h-screen bg-[#0a0a0f] flex items-center justify-center">
-  <div class="text-center mx-4 max-w-lg">
-    <img src="/public/fliplogo.png" alt="Flip Browser" class="w-20 h-20 rounded-3xl mx-auto mb-6 shadow-2xl shadow-orange-500/30">
-    <h1 class="text-3xl font-bold text-white/90 mb-3">Flip Developer Portal</h1>
-    <p class="text-white/40 mb-8 leading-relaxed">Build extensions for Flip Browser and reach thousands of users. Submit your extension for review and get listed on the marketplace.</p>
+<body class="min-h-screen bg-[#0a0a0f]">
+  <!-- Top bar -->
+  <div class="border-b border-white/[0.06] bg-white/[0.02] px-6 py-3 flex items-center justify-between">
+    <a href="/" class="flex items-center gap-3">
+      <img src="/public/fliplogo.png" alt="Flip" class="w-8 h-8 rounded-xl">
+      <span class="text-sm font-semibold text-white/70">Flip Developer Portal</span>
+    </a>
+    <div class="flex items-center gap-4">
+      <a href="/docs" class="text-xs text-white/30 hover:text-white/50 transition-colors">Docs</a>
+      <a href="/submit" class="text-xs px-4 py-1.5 rounded-lg bg-flip-500/10 border border-flip-500/20 text-flip-400 font-medium hover:bg-flip-500/20 transition-colors">Submit Extension</a>
+    </div>
+  </div>
 
-    <div class="flex flex-col gap-3 max-w-xs mx-auto mb-12">
+  <!-- Hero -->
+  <div class="text-center px-6 pt-16 pb-12 max-w-2xl mx-auto">
+    <img src="/public/fliplogo.png" alt="Flip Browser" class="w-16 h-16 rounded-2xl mx-auto mb-6 shadow-2xl shadow-orange-500/30">
+    <h1 class="text-3xl font-bold text-white/90 mb-3">Flip Extension Marketplace</h1>
+    <p class="text-white/40 mb-8 leading-relaxed max-w-md mx-auto">Browse <%= extensions.length %> extensions available for Flip Browser. Developers can submit new extensions for review.</p>
+
+    <div class="flex justify-center gap-3 mb-8">
       <a href="/submit"
-        class="inline-flex items-center justify-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-flip-500 to-orange-600 text-white font-semibold text-base hover:opacity-90 transition-opacity shadow-2xl shadow-orange-500/30">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-gradient-to-r from-flip-500 to-orange-600 text-white font-semibold text-sm hover:opacity-90 transition-opacity shadow-xl shadow-orange-500/20">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         Submit an Extension
       </a>
       <a href="/docs"
-        class="inline-flex items-center justify-center gap-2 px-8 py-3 rounded-2xl bg-white/[0.04] border border-white/[0.08] text-white/50 font-medium text-sm hover:text-white/70 hover:bg-white/[0.06] transition-colors">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
+        class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-white/[0.04] border border-white/[0.08] text-white/50 font-medium text-sm hover:text-white/70 hover:bg-white/[0.06] transition-colors">
         Read the Docs
       </a>
     </div>
 
-    <div class="grid grid-cols-3 gap-4 text-left mb-12">
-      <div class="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5">
-        <div class="w-10 h-10 rounded-xl bg-flip-500/10 flex items-center justify-center mb-3">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(249,115,22,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-        </div>
-        <h3 class="text-sm font-semibold text-white/70 mb-1">Build</h3>
-        <p class="text-xs text-white/30 leading-relaxed">Use React JSX, Flip SDK APIs, and the permissions system to build powerful extensions.</p>
+    <!-- Search / Filter -->
+    <div class="max-w-md mx-auto">
+      <input type="text" id="searchBox" placeholder="Search extensions…"
+        class="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-3 text-sm text-white/80 placeholder:text-white/20 outline-none focus:border-flip-500/30 transition-colors">
+    </div>
+  </div>
+
+  <!-- Category filter -->
+  <div class="max-w-5xl mx-auto px-6 mb-6">
+    <div class="flex flex-wrap gap-2" id="categoryFilters">
+      <button data-cat="all" class="cat-btn active text-xs px-3 py-1.5 rounded-lg border border-white/[0.08] bg-white/[0.06] text-white/60 transition-colors">All</button>
+      <button data-cat="featured" class="cat-btn text-xs px-3 py-1.5 rounded-lg border border-white/[0.06] bg-white/[0.02] text-white/30 hover:text-white/50 transition-colors">Featured</button>
+      <%
+        const cats = [...new Set(extensions.map(e => e.category))].sort();
+        cats.forEach(function(cat) {
+      %>
+        <button data-cat="<%= cat %>" class="cat-btn text-xs px-3 py-1.5 rounded-lg border border-white/[0.06] bg-white/[0.02] text-white/30 hover:text-white/50 transition-colors capitalize"><%= cat %></button>
+      <% }); %>
+    </div>
+  </div>
+
+  <!-- Extensions grid -->
+  <div class="max-w-5xl mx-auto px-6 pb-16">
+    <% if (extensions.length === 0) { %>
+      <div class="text-center py-16">
+        <p class="text-white/20 text-sm">No extensions available yet.</p>
       </div>
-      <div class="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5">
-        <div class="w-10 h-10 rounded-xl bg-flip-500/10 flex items-center justify-center mb-3">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(249,115,22,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-        </div>
-        <h3 class="text-sm font-semibold text-white/70 mb-1">Submit</h3>
-        <p class="text-xs text-white/30 leading-relaxed">Upload your .zip package with manifest.json. We validate permissions and security automatically.</p>
+    <% } else { %>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="extGrid">
+        <% extensions.forEach(function(ext) { %>
+          <div class="ext-card bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5 hover:bg-white/[0.05] hover:border-white/[0.1] transition-all group"
+               data-name="<%= ext.name.toLowerCase() %>"
+               data-desc="<%= (ext.description || '').toLowerCase() %>"
+               data-cat="<%= ext.category %>"
+               data-featured="<%= ext.featured %>">
+            <div class="flex items-start gap-4 mb-3">
+              <div class="w-10 h-10 rounded-xl bg-flip-500/10 flex items-center justify-center shrink-0 text-flip-400/60 group-hover:text-flip-400 transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 mb-1">
+                  <h3 class="text-sm font-semibold text-white/80 truncate"><%= ext.name %></h3>
+                  <span class="text-[10px] font-mono text-white/20">v<%= ext.version %></span>
+                </div>
+                <p class="text-xs text-white/30 leading-relaxed line-clamp-2"><%= ext.description %></p>
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] px-2 py-0.5 rounded-lg bg-white/[0.04] text-white/25 capitalize"><%= ext.category %></span>
+                <% if (ext.featured) { %>
+                  <span class="text-[10px] px-2 py-0.5 rounded-lg bg-flip-500/10 text-flip-400/60 border border-flip-500/10">Featured</span>
+                <% } %>
+              </div>
+              <span class="text-[10px] text-white/20">by <%= ext.author %></span>
+            </div>
+          </div>
+        <% }); %>
       </div>
-      <div class="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5">
-        <div class="w-10 h-10 rounded-xl bg-flip-500/10 flex items-center justify-center mb-3">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(249,115,22,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+    <% } %>
+  </div>
+
+  <!-- How it works -->
+  <div class="border-t border-white/[0.06] bg-white/[0.01]">
+    <div class="max-w-3xl mx-auto px-6 py-16">
+      <h2 class="text-lg font-bold text-white/80 text-center mb-8">How to Submit</h2>
+      <div class="grid grid-cols-3 gap-6 text-center">
+        <div>
+          <div class="w-12 h-12 rounded-2xl bg-flip-500/10 flex items-center justify-center mx-auto mb-3">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(249,115,22,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+          </div>
+          <h3 class="text-sm font-semibold text-white/70 mb-1">Build</h3>
+          <p class="text-xs text-white/30 leading-relaxed">Use React JSX and the Flip SDK to build extensions.</p>
         </div>
-        <h3 class="text-sm font-semibold text-white/70 mb-1">Publish</h3>
-        <p class="text-xs text-white/30 leading-relaxed">After review, your extension goes live on the Flip Marketplace for all users to install.</p>
+        <div>
+          <div class="w-12 h-12 rounded-2xl bg-flip-500/10 flex items-center justify-center mx-auto mb-3">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(249,115,22,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <h3 class="text-sm font-semibold text-white/70 mb-1">Submit</h3>
+          <p class="text-xs text-white/30 leading-relaxed">Upload your .zip with manifest.json for validation.</p>
+        </div>
+        <div>
+          <div class="w-12 h-12 rounded-2xl bg-flip-500/10 flex items-center justify-center mx-auto mb-3">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(249,115,22,0.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <h3 class="text-sm font-semibold text-white/70 mb-1">Publish</h3>
+          <p class="text-xs text-white/30 leading-relaxed">Approved extensions go live on the marketplace.</p>
+        </div>
       </div>
     </div>
+  </div>
 
+  <!-- Footer -->
+  <div class="border-t border-white/[0.04] py-6 text-center">
     <a href="https://croak.work" target="_blank" class="inline-flex items-center gap-1.5 text-[10px] text-white/15 hover:text-white/30 transition-colors">
       <img src="/public/fliplogo.png" alt="" class="w-3.5 h-3.5 rounded opacity-40">
       CROAKWORKS
     </a>
   </div>
+
+  <style>
+    .cat-btn.active { background: rgba(249,115,22,0.1); border-color: rgba(249,115,22,0.2); color: rgba(249,115,22,0.8); }
+    .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  </style>
+
+  <script>
+    // Search
+    const searchBox = document.getElementById('searchBox');
+    const cards = document.querySelectorAll('.ext-card');
+
+    function filterCards() {
+      const q = searchBox.value.toLowerCase();
+      const activeCat = document.querySelector('.cat-btn.active')?.dataset.cat || 'all';
+
+      cards.forEach(card => {
+        const nameMatch = card.dataset.name.includes(q) || card.dataset.desc.includes(q);
+        const catMatch = activeCat === 'all' || card.dataset.cat === activeCat || (activeCat === 'featured' && card.dataset.featured === 'true');
+        card.style.display = (nameMatch && catMatch) ? '' : 'none';
+      });
+    }
+
+    searchBox.addEventListener('input', filterCards);
+
+    // Category filters
+    document.querySelectorAll('.cat-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        filterCards();
+      });
+    });
+  </script>
 </body>
 </html>

@@ -36,10 +36,22 @@ function verifyAdmin(req) {
 }
 
 // ============================================================
-// PUBLIC — Landing page
+// PUBLIC — Landing page (shows approved marketplace extensions)
 // ============================================================
-app.get('/', (req, res) => {
-  res.render('landing');
+const MARKETPLACE_URL = 'https://peru-grasshopper-236853.hostingersite.com/marketplace-packages/marketplace.json';
+
+app.get('/', async (req, res) => {
+  let extensions = [];
+  try {
+    const resp = await fetch(MARKETPLACE_URL, { signal: AbortSignal.timeout(5000) });
+    if (resp.ok) {
+      const data = await resp.json();
+      extensions = (data.extensions || []).filter(e => e.approved);
+    }
+  } catch (err) {
+    console.error('Failed to fetch marketplace:', err.message);
+  }
+  res.render('landing', { extensions });
 });
 
 // ============================================================
