@@ -19,7 +19,5 @@
       "src": "/(.*)",
       "dest": "/api/index.js"
     }
-  ],
-  "outputDirectory": ".",
-  "includeFiles": ["views/**", "lib/**", "public/**"]
+  ]
 }
