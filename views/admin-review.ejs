@@ -66,6 +66,18 @@
         <div class="space-y-2 text-sm">
           <div class="flex justify-between"><span class="text-white/30">Author</span><span class="text-white/60"><%= submission.author %></span></div>
           <div class="flex justify-between"><span class="text-white/30">Email</span><span class="text-white/60"><%= submission.author_email || '—' %></span></div>
+          <% if (submission.author_website) { %>
+            <div class="flex justify-between"><span class="text-white/30">Website</span><a href="<%= submission.author_website %>" target="_blank" class="text-flip-400/60 hover:text-flip-400 transition-colors"><%= submission.author_website %></a></div>
+          <% } %>
+          <% if (submission.author_github) { %>
+            <div class="flex justify-between"><span class="text-white/30">GitHub</span><a href="https://github.com/<%= submission.author_github %>" target="_blank" class="text-flip-400/60 hover:text-flip-400 transition-colors">@<%= submission.author_github %></a></div>
+          <% } %>
+          <% if (submission.author_twitter) { %>
+            <div class="flex justify-between"><span class="text-white/30">X / Twitter</span><a href="https://x.com/<%= submission.author_twitter %>" target="_blank" class="text-flip-400/60 hover:text-flip-400 transition-colors">@<%= submission.author_twitter %></a></div>
+          <% } %>
+          <% if (submission.author_discord) { %>
+            <div class="flex justify-between"><span class="text-white/30">Discord</span><span class="text-white/60"><%= submission.author_discord %></span></div>
+          <% } %>
           <div class="flex justify-between"><span class="text-white/30">Submitted</span><span class="text-white/60"><%= new Date(submission.created_at).toLocaleString() %></span></div>
           <% if (submission.reviewed_at) { %>
             <div class="flex justify-between"><span class="text-white/30">Reviewed</span><span class="text-white/60"><%= new Date(submission.reviewed_at).toLocaleString() %></span></div>

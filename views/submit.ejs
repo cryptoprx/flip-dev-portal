@@ -69,15 +69,45 @@
       <!-- Developer info -->
       <div class="bg-white/[0.03] border border-white/[0.06] rounded-2xl p-6">
         <h2 class="text-sm font-semibold text-white/60 mb-4">Developer Information</h2>
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <label class="block text-[10px] text-white/30 mb-1 uppercase tracking-wider font-medium">Your Name / Org</label>
-            <input type="text" name="author_name" placeholder="e.g. John Doe"
+            <label class="block text-[10px] text-white/30 mb-1 uppercase tracking-wider font-medium">Your Name / Org <span class="text-red-400">*</span></label>
+            <input type="text" name="author_name" placeholder="e.g. John Doe" required
               class="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white/80 placeholder:text-white/15 outline-none focus:border-flip-500/40 transition-colors">
           </div>
           <div>
-            <label class="block text-[10px] text-white/30 mb-1 uppercase tracking-wider font-medium">Email (optional)</label>
-            <input type="email" name="author_email" placeholder="dev@example.com"
+            <label class="block text-[10px] text-white/30 mb-1 uppercase tracking-wider font-medium">Email <span class="text-red-400">*</span></label>
+            <input type="email" name="author_email" placeholder="dev@example.com" required
+              class="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white/80 placeholder:text-white/15 outline-none focus:border-flip-500/40 transition-colors">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4 mb-4">
+          <div>
+            <label class="block text-[10px] text-white/30 mb-1 uppercase tracking-wider font-medium">Website (optional)</label>
+            <input type="url" name="author_website" placeholder="https://yoursite.com"
+              class="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white/80 placeholder:text-white/15 outline-none focus:border-flip-500/40 transition-colors">
+          </div>
+          <div>
+            <label class="block text-[10px] text-white/30 mb-1 uppercase tracking-wider font-medium">GitHub (optional)</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-white/15 text-sm">github.com/</span>
+              <input type="text" name="author_github" placeholder="username"
+                class="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-[6.5rem] pr-4 py-2.5 text-sm text-white/80 placeholder:text-white/15 outline-none focus:border-flip-500/40 transition-colors">
+            </div>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-[10px] text-white/30 mb-1 uppercase tracking-wider font-medium">X / Twitter (optional)</label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-white/15 text-sm">x.com/</span>
+              <input type="text" name="author_twitter" placeholder="handle"
+                class="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl pl-[3.5rem] pr-4 py-2.5 text-sm text-white/80 placeholder:text-white/15 outline-none focus:border-flip-500/40 transition-colors">
+            </div>
+          </div>
+          <div>
+            <label class="block text-[10px] text-white/30 mb-1 uppercase tracking-wider font-medium">Discord (optional)</label>
+            <input type="text" name="author_discord" placeholder="username#0000 or server invite"
               class="w-full bg-white/[0.04] border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-white/80 placeholder:text-white/15 outline-none focus:border-flip-500/40 transition-colors">
           </div>
         </div>
