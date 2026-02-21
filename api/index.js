@@ -324,57 +324,25 @@ app.post('/admin/reject/:id', async (req, res) => {
 });
 
 // ============================================================
-// API — Verify Firebase ID token (lightweight, no Admin SDK)
+// API — Create Stripe Checkout session (email-based)
 // ============================================================
-async function verifyFirebaseToken(idToken) {
+app.post('/api/checkout', async (req, res) => {
   try {
-    // Fetch Google's public keys and verify the JWT
-    const resp = await fetch(`https://www.googleapis.com/identitytoolkit/v3/relyingparty/getAccountInfo?key=unused`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
-    });
-    // Alternative: decode JWT and verify with Google's public certs
-    const parts = idToken.split('.');
-    if (parts.length !== 3) return null;
-    const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
-    // Check issuer and expiry
-    if (payload.iss !== `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`) return null;
-    if (payload.aud !== FIREBASE_PROJECT_ID) return null;
-    if (payload.exp * 1000 < Date.now()) return null;
-    return { uid: payload.sub || payload.user_id, email: payload.email };
-  } catch {
-    return null;
-  }
-}
-
-// Middleware to extract Firebase user from Authorization header
-async function requireAuth(req, res, next) {
-  const auth = req.headers.authorization;
-  if (!auth?.startsWith('Bearer ')) return res.status(401).json({ error: 'Missing authorization' });
-  const user = await verifyFirebaseToken(auth.slice(7));
-  if (!user) return res.status(401).json({ error: 'Invalid or expired token' });
-  req.firebaseUser = user;
-  next();
-}
-
-// ============================================================
-// API — Create Stripe Checkout session
-// ============================================================
-app.post('/api/checkout', requireAuth, async (req, res) => {
-  try {
-    const { ext_id, price_id, plan_type } = req.body;
+    const { ext_id, price_id, plan_type, email } = req.body;
     if (!ext_id || !price_id) return res.status(400).json({ error: 'ext_id and price_id are required' });
+    if (!email || !email.includes('@')) return res.status(400).json({ error: 'Valid email is required' });
 
-    const { uid, email } = req.firebaseUser;
+    const normalizedEmail = email.trim().toLowerCase();
 
-    // Get or create customer
-    const customer = await db.getOrCreateCustomer(uid, email);
+    // Get or create customer by email
+    const customer = await db.getOrCreateCustomerByEmail(normalizedEmail);
     let stripeCustomerId = customer.stripe_customer;
 
     // Create Stripe customer if needed
     if (!stripeCustomerId) {
-      const sc = await stripe.customers.create({ email, metadata: { firebase_uid: uid } });
+      const sc = await stripe.customers.create({ email: normalizedEmail, metadata: { flip_uid: customer.firebase_uid } });
       stripeCustomerId = sc.id;
-      await db.updateCustomerStripe(uid, stripeCustomerId);
+      await db.updateCustomerStripe(customer.firebase_uid, stripeCustomerId);
     }
 
     // Create Checkout session
@@ -385,13 +353,13 @@ app.post('/api/checkout', requireAuth, async (req, res) => {
       mode: plan_type === 'one_time' ? 'payment' : 'subscription',
       success_url: `${PORTAL_URL}/purchase/success?ext=${ext_id}`,
       cancel_url: `${PORTAL_URL}/purchase/cancel?ext=${ext_id}`,
-      metadata: { firebase_uid: uid, ext_id, plan_type: plan_type || 'monthly', price_id },
+      metadata: { firebase_uid: customer.firebase_uid, ext_id, plan_type: plan_type || 'monthly', price_id, email: normalizedEmail },
     };
 
     // For subscriptions, also pass metadata to the subscription
     if (plan_type !== 'one_time') {
       sessionParams.subscription_data = {
-        metadata: { firebase_uid: uid, ext_id },
+        metadata: { firebase_uid: customer.firebase_uid, ext_id, email: normalizedEmail },
       };
     }
 
@@ -404,11 +372,14 @@ app.post('/api/checkout', requireAuth, async (req, res) => {
 });
 
 // ============================================================
-// API — Get user entitlements (browser calls this)
+// API — Get user entitlements by email (browser calls this)
 // ============================================================
-app.get('/api/entitlements', requireAuth, async (req, res) => {
+app.get('/api/entitlements', async (req, res) => {
   try {
-    const entitlements = await db.getEntitlements(req.firebaseUser.uid);
+    const email = (req.query.email || '').trim().toLowerCase();
+    if (!email || !email.includes('@')) return res.status(400).json({ error: 'Valid email is required' });
+
+    const entitlements = await db.getEntitlementsByEmail(email);
     res.json({
       extensions: entitlements.map(e => ({
         ext_id: e.ext_id,
@@ -424,14 +395,16 @@ app.get('/api/entitlements', requireAuth, async (req, res) => {
 });
 
 // ============================================================
-// API — Cancel subscription
+// API — Cancel subscription by email
 // ============================================================
-app.post('/api/cancel-subscription', requireAuth, async (req, res) => {
+app.post('/api/cancel-subscription', async (req, res) => {
   try {
-    const { ext_id } = req.body;
+    const { ext_id, email } = req.body;
     if (!ext_id) return res.status(400).json({ error: 'ext_id is required' });
+    if (!email || !email.includes('@')) return res.status(400).json({ error: 'Valid email is required' });
 
-    const entitlements = await db.getEntitlements(req.firebaseUser.uid);
+    const normalizedEmail = email.trim().toLowerCase();
+    const entitlements = await db.getEntitlementsByEmail(normalizedEmail);
     const ent = entitlements.find(e => e.ext_id === ext_id);
     if (!ent || !ent.stripe_sub_id) return res.status(404).json({ error: 'No active subscription found' });
 
