@@ -8,12 +8,97 @@ const { put, del } = require('@vercel/blob');
 const db = require('../lib/db');
 const { validateManifest, validateFiles, ALLOWED_CATEGORIES } = require('../lib/validate');
 
+// ── Stripe ───────────────────────────────────────────────────
+const Stripe = require('stripe');
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
+const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || '';
+const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID || 'mimo-b5745';
+const PORTAL_URL = process.env.PORTAL_URL || 'https://flip-dev-portal-nine.vercel.app';
+
 const app = express();
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, '..', 'views'));
+app.use('/public', express.static(path.join(__dirname, '..', 'public')));
+
+// ── Stripe webhook needs raw body — must come BEFORE express.json() ──
+app.post('/api/webhook/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, req.headers['stripe-signature'], STRIPE_WEBHOOK_SECRET);
+  } catch (err) {
+    console.error('[Stripe Webhook] Signature verification failed:', err.message);
+    return res.status(400).json({ error: 'Webhook signature verification failed' });
+  }
+
+  try {
+    switch (event.type) {
+      case 'checkout.session.completed': {
+        const session = event.data.object;
+        const firebaseUid = session.metadata?.firebase_uid;
+        const extId = session.metadata?.ext_id;
+        const planType = session.metadata?.plan_type || 'monthly';
+        if (!firebaseUid || !extId) break;
+
+        // Link Stripe customer to our customer record
+        if (session.customer) {
+          await db.updateCustomerStripe(firebaseUid, session.customer);
+        }
+
+        // Create or update entitlement
+        await db.createEntitlement({
+          firebase_uid: firebaseUid,
+          ext_id: extId,
+          stripe_sub_id: session.subscription || null,
+          stripe_price_id: session.metadata?.price_id || null,
+          plan_type: planType,
+          status: 'active',
+        });
+        console.log(`[Stripe] Entitlement created: ${firebaseUid} → ${extId}`);
+        break;
+      }
+
+      case 'customer.subscription.updated': {
+        const sub = event.data.object;
+        const status = sub.cancel_at_period_end ? 'cancelling' : (sub.status === 'active' ? 'active' : sub.status);
+        await db.updateEntitlementBySubscription(sub.id, status);
+        console.log(`[Stripe] Subscription ${sub.id} updated → ${status}`);
+        break;
+      }
+
+      case 'customer.subscription.deleted': {
+        const sub = event.data.object;
+        await db.updateEntitlementBySubscription(sub.id, 'expired');
+        console.log(`[Stripe] Subscription ${sub.id} deleted → expired`);
+        break;
+      }
+
+      case 'invoice.payment_succeeded': {
+        const invoice = event.data.object;
+        if (invoice.subscription) {
+          await db.updateEntitlementBySubscription(invoice.subscription, 'active');
+        }
+        break;
+      }
+
+      case 'invoice.payment_failed': {
+        const invoice = event.data.object;
+        if (invoice.subscription) {
+          await db.updateEntitlementBySubscription(invoice.subscription, 'past_due');
+        }
+        console.log(`[Stripe] Payment failed for subscription ${invoice.subscription}`);
+        break;
+      }
+    }
+  } catch (err) {
+    console.error('[Stripe Webhook] Handler error:', err);
+  }
+
+  res.json({ received: true });
+});
+
+// ── Now apply body parsers for all other routes ──
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use('/public', express.static(path.join(__dirname, '..', 'public')));
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
 const ADMIN_USER = process.env.ADMIN_USERNAME || 'admin';
@@ -236,6 +321,154 @@ app.post('/admin/reject/:id', async (req, res) => {
     console.error(err);
     res.status(500).send('Server error');
   }
+});
+
+// ============================================================
+// API — Verify Firebase ID token (lightweight, no Admin SDK)
+// ============================================================
+async function verifyFirebaseToken(idToken) {
+  try {
+    // Fetch Google's public keys and verify the JWT
+    const resp = await fetch(`https://www.googleapis.com/identitytoolkit/v3/relyingparty/getAccountInfo?key=unused`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+    });
+    // Alternative: decode JWT and verify with Google's public certs
+    const parts = idToken.split('.');
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
+    // Check issuer and expiry
+    if (payload.iss !== `https://securetoken.google.com/${FIREBASE_PROJECT_ID}`) return null;
+    if (payload.aud !== FIREBASE_PROJECT_ID) return null;
+    if (payload.exp * 1000 < Date.now()) return null;
+    return { uid: payload.sub || payload.user_id, email: payload.email };
+  } catch {
+    return null;
+  }
+}
+
+// Middleware to extract Firebase user from Authorization header
+async function requireAuth(req, res, next) {
+  const auth = req.headers.authorization;
+  if (!auth?.startsWith('Bearer ')) return res.status(401).json({ error: 'Missing authorization' });
+  const user = await verifyFirebaseToken(auth.slice(7));
+  if (!user) return res.status(401).json({ error: 'Invalid or expired token' });
+  req.firebaseUser = user;
+  next();
+}
+
+// ============================================================
+// API — Create Stripe Checkout session
+// ============================================================
+app.post('/api/checkout', requireAuth, async (req, res) => {
+  try {
+    const { ext_id, price_id, plan_type } = req.body;
+    if (!ext_id || !price_id) return res.status(400).json({ error: 'ext_id and price_id are required' });
+
+    const { uid, email } = req.firebaseUser;
+
+    // Get or create customer
+    const customer = await db.getOrCreateCustomer(uid, email);
+    let stripeCustomerId = customer.stripe_customer;
+
+    // Create Stripe customer if needed
+    if (!stripeCustomerId) {
+      const sc = await stripe.customers.create({ email, metadata: { firebase_uid: uid } });
+      stripeCustomerId = sc.id;
+      await db.updateCustomerStripe(uid, stripeCustomerId);
+    }
+
+    // Create Checkout session
+    const sessionParams = {
+      customer: stripeCustomerId,
+      payment_method_types: ['card'],
+      line_items: [{ price: price_id, quantity: 1 }],
+      mode: plan_type === 'one_time' ? 'payment' : 'subscription',
+      success_url: `${PORTAL_URL}/purchase/success?ext=${ext_id}`,
+      cancel_url: `${PORTAL_URL}/purchase/cancel?ext=${ext_id}`,
+      metadata: { firebase_uid: uid, ext_id, plan_type: plan_type || 'monthly', price_id },
+    };
+
+    // For subscriptions, also pass metadata to the subscription
+    if (plan_type !== 'one_time') {
+      sessionParams.subscription_data = {
+        metadata: { firebase_uid: uid, ext_id },
+      };
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
+    res.json({ url: session.url, sessionId: session.id });
+  } catch (err) {
+    console.error('[Checkout] Error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================
+// API — Get user entitlements (browser calls this)
+// ============================================================
+app.get('/api/entitlements', requireAuth, async (req, res) => {
+  try {
+    const entitlements = await db.getEntitlements(req.firebaseUser.uid);
+    res.json({
+      extensions: entitlements.map(e => ({
+        ext_id: e.ext_id,
+        plan_type: e.plan_type,
+        status: e.status,
+        expires_at: e.expires_at,
+      })),
+    });
+  } catch (err) {
+    console.error('[Entitlements] Error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ============================================================
+// API — Cancel subscription
+// ============================================================
+app.post('/api/cancel-subscription', requireAuth, async (req, res) => {
+  try {
+    const { ext_id } = req.body;
+    if (!ext_id) return res.status(400).json({ error: 'ext_id is required' });
+
+    const entitlements = await db.getEntitlements(req.firebaseUser.uid);
+    const ent = entitlements.find(e => e.ext_id === ext_id);
+    if (!ent || !ent.stripe_sub_id) return res.status(404).json({ error: 'No active subscription found' });
+
+    // Cancel at period end (user keeps access until billing period ends)
+    await stripe.subscriptions.update(ent.stripe_sub_id, { cancel_at_period_end: true });
+    res.json({ success: true, message: 'Subscription will cancel at end of billing period' });
+  } catch (err) {
+    console.error('[Cancel] Error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============================================================
+// Purchase result pages
+// ============================================================
+app.get('/purchase/success', (req, res) => {
+  const ext = req.query.ext || 'extension';
+  res.send(`
+    <!DOCTYPE html><html><head><title>Purchase Successful</title>
+    <style>body{font-family:system-ui;background:#0a0a0f;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+    .card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:40px;text-align:center;max-width:400px}
+    h1{color:#22c55e;margin:0 0 12px}p{color:rgba(255,255,255,0.5);font-size:14px;margin:0 0 20px}
+    .btn{background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;border:none;padding:10px 24px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none}</style></head>
+    <body><div class="card"><h1>Purchase Successful!</h1><p>You now have access to <strong>${ext}</strong>. Return to Flip Browser to use it.</p><a class="btn" href="#" onclick="window.close()">Close Window</a></div></body></html>
+  `);
+});
+
+app.get('/purchase/cancel', (req, res) => {
+  const ext = req.query.ext || 'extension';
+  res.send(`
+    <!DOCTYPE html><html><head><title>Purchase Cancelled</title>
+    <style>body{font-family:system-ui;background:#0a0a0f;color:#fff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+    .card{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:16px;padding:40px;text-align:center;max-width:400px}
+    h1{color:#f59e0b;margin:0 0 12px}p{color:rgba(255,255,255,0.5);font-size:14px;margin:0 0 20px}
+    .btn{background:rgba(255,255,255,0.06);color:#fff;border:1px solid rgba(255,255,255,0.1);padding:10px 24px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;text-decoration:none}</style></head>
+    <body><div class="card"><h1>Purchase Cancelled</h1><p>No charges were made. You can try again anytime from the Flip Browser marketplace.</p><a class="btn" href="#" onclick="window.close()">Close Window</a></div></body></html>
+  `);
 });
 
 // ============================================================
